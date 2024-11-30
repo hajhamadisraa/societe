@@ -1,11 +1,10 @@
 from flask import Flask, render_template, request, redirect
 import pyodbc
+import os
 
-app = Flask(__name__)  
-@app.route('/mon-url')
-def ma_vue():
-    return 'Contenu de la page'
-  
+# Créez l'instance de l'application Flask
+app = Flask(__name__)
+
 # Connexion à la base de données Azure SQL
 conn = pyodbc.connect(
     'DRIVER={ODBC Driver 17 for SQL Server};'
@@ -78,14 +77,10 @@ def supprimer_client(id_client):
     conn.commit()
     return redirect('/liste_client')
 
-import os
-
 @app.route('/debug_templates')
 def debug_templates():
     template_dir = os.path.join(os.getcwd(), 'templates')  # Adaptez si chemin personnalisé
     return str(os.listdir(template_dir))
 
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8000)

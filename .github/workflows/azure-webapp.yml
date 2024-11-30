@@ -1,0 +1,40 @@
+name: Déployer l'application Flask sur Azure
+
+on:
+  push:
+    branches:
+      - main  # Déclenche le déploiement lorsque des modifications sont poussées sur la branche main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest  # Utiliser un runner Ubuntu pour cette tâche
+
+    steps:
+    # Étape 1 : Vérifier le code du dépôt
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Étape 2 : Configurer Python
+    - name: Configurer Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    # Étape 3 : Installer les dépendances
+    - name: Installer les dépendances
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # Étape 4 : Construire et tester l'application (facultatif)
+    - name: Exécuter les tests
+      run: |
+        python -m unittest discover  # Facultatif : Exécute les tests si vous en avez
+
+    # Étape 5 : Déployer sur Azure
+    - name: 'Déployer sur Azure Web App'
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: NOM_DE_VOTRE_APP  # Remplacez par le nom de votre Azure App Service
+        slot-name: production  # Utilisez 'production' ou un autre slot
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}

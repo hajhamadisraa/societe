@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect
 import pyodbc
 
-app = Flask(__name__)    
+app = Flask(__name__)  
+@app.route('/mon-url')
+def ma_vue():
+    return 'Contenu de la page'
+  
 # Connexion à la base de données Azure SQL
 conn = pyodbc.connect(
     'DRIVER={ODBC Driver 17 for SQL Server};'

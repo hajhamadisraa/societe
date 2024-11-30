@@ -1,0 +1,78 @@
+name: Build and deploy Python app to Azure Web App - societee
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Cloner le dépôt
+      - uses: actions/checkout@v4
+
+      # Étape 2 : Configurer la version de Python
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      # Étape 3 : Créer un environnement virtuel et installer les dépendances
+      - name: Create and start virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Étape 4 (facultative) : Ajouter des tests
+      # Ajoutez ici des tests spécifiques à votre application si nécessaire.
+
+      # Étape 5 : Créer un fichier zip contenant l'application
+      - name: Zip artifact for deployment
+        run: zip -r release.zip ./* -x "venv/*"
+
+      # Étape 6 : Télécharger l'artifact pour l'étape de déploiement
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+    permissions:
+      id-token: write  # Obligatoire pour demander un jeton JWT
+
+    steps:
+      # Étape 1 : Télécharger l'artifact depuis l'étape de build
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      # Étape 2 : Décompresser le fichier zip
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
+
+      # Étape 3 : Se connecter à Azure
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      # Étape 4 : Déployer sur Azure Web App
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'societee'  # Remplacez par le nom exact de votre Azure Web App
+          slot-name: 'production'  # Laissez 'production' si vous n'utilisez pas de slot de déploiement
